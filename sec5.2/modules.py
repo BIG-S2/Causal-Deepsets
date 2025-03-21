@@ -61,7 +61,6 @@ class Model_Behav(nn.Module):
         x = self.linear2(x)
         return x 
 
-# 其实考虑把deepset作为父类，其他从他继承来，这样可能比较方便。如果需要DIY，再单独加？
 
 class Reward_Estimator(nn.Module):
     def __init__(self, deepset, dims, spatial):

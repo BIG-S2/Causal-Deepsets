@@ -90,19 +90,13 @@ class Simulator(object):
         S = np.stack([U,V]).transpose(1,2,0)
         A = pi.get_action(S)
         beta = self.get_beta_matrix()
-#         if self.fmod:
-#             inpt = np.dot(beta,A) +np.dot(beta,U) + np.dot(beta,V)
-#         else:
-#             inpt = np.dot(beta,A) +np.dot(beta,U) + np.dot(beta,V) + self.get_max_matrix(self.g_func(U+V))
-#         inpt = 0.1*np.dot(beta,A) + np.dot(beta, self.g_func(U,V))
         if self.fmod:
             inpt =  0.1*np.dot(beta,A)  + np.dot(beta, U) + np.dot(beta, V)
         else:
             inpt = 0.1*np.dot(beta,A)  + np.dot(beta, A*U)
         R = inpt
 
-
-        return np.sum(R)/t/self.N
+        return np.sum(R)/t/self.N, np.std(R)
 
     def get_tgt_trajs(self, t, pi):
 

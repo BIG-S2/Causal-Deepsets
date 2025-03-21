@@ -1,6 +1,6 @@
-# Causal Deepsets for Off-policy Evaluation under Spatial or Spatio-temporal Interferences
+# Causal PIE: Permutation Invariant Estimator for Off-policy Evaluation under Spatial or Spatial-temporal Interferences
 
-This repository contains the implementation for the paper "Causal Deepsets for Off-policy Evaluation under Spatial or Spatio-temporal Interferences" in Python.
+This repository contains the implementation for the paper "Causal PIE: Permutation Invariant Estimator for Off-policy Evaluation under Spatial or Spatial-temporal Interferences" in Python.
 
 The code consists of two parts. The code for Nondynamic Simulation, as described in Section 5.1 of the paper, is located in the `sec5.1` folder. Conversely, the code for Dynamic Simulation, outlined in Section 5.2, is housed in the `sec5.2` folder. To replicate the results presented in our manuscript, please follow the instructions provided below.
 

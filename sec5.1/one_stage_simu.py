@@ -7,7 +7,6 @@ import torch.nn.functional as F
 
 from modules import *
 
-# If I add something here.
 class DeepDR():
     def __init__(self, seed, trajs, adj_mat, normalize, deepset, pi_tgt, deep_dim):
         self.seed = seed
@@ -62,23 +61,14 @@ class DeepDR():
     def est_reward(self, batch_size,max_iters, hidden_dim, print_freq, lr, device ):
         input_dim = self.dim_S + self.dim_A
         self.value_func = FQE_module(self.trajs, self.adj_mat, self.deepset, input_dim, hidden_dim, self.deep_dim, lr, device )
-        # model_pth = 'model/deepset_{}hdim{}_ddim{}_lr{}_iter{}.pkl'.format(self.deepset, hidden_dim,self.deep_dim,lr,max_iters)
 
         model_pth = 'car_model/normalize_{}deepset_{}hdim{}_ddim{}_lr{}_iter{}.pkl'.format(self.normalize, self.deepset, hidden_dim,self.deep_dim,lr,max_iters)
-        # if not os.path.exists(model_pth):
         self.value_func.train(batch_size, max_iters, print_freq)
-            # torch.save(self.value_func.model.state_dict(),model_pth)
-        # else:
-        #     print('LOADING FORMER MODEL PARMS {}...'.format(model_pth))
-        #     self.value_func.model.load_state_dict(torch.load(model_pth))
-        #     print('DONE!')
 
         
     def est_prop_score(self, rep, beh_pi, mod, thresh, eql_thresh, noise, std):
         prop_estimator = Prop_module( self.trajs, self.adj_mat, self.pi_tgt, beh_pi, thresh, eql_thresh)
         self.batch_idx, self.prob = prop_estimator.cal_prob(self.value_func, mod, rep, noise, std)
-#         print(self.prob[:10])
-#         print(self.batch_idx[:10])
         self.a_tgt = prop_estimator.a_tgt
         
     def check_reward(self, batch_size, rep, eql_thresh):
@@ -141,11 +131,9 @@ class DeepDR():
             prob_list.append(prob)
             dr_est = self.construct_dr_est(batch_idx, prob, a_tgt)
             is_est = self.construct_is_est(batch_idx, prob)
-            # plg_est = self.construct_plg_est(a_tgt)
             dr_list.append(dr_est)
             is_list.append(is_est)
             print(len(batch_idx))
-            # plg_list.append(plg_est)
         return batch_len, dr_list, is_list, prob_list
 
         
@@ -158,13 +146,6 @@ class DeepDR():
 
         rew_pi = self.value_func.get_value(comb_x, comb_neigh).reshape(len(batch_idx),-1)
         rew_ori = self.value_func.get_value(x,neigh_x).reshape(len(batch_idx),-1)
-        # print(rew_pi[:20])
-        # print(rew_ori[:20])
-        if self.normalize:
-            rsup = self.min_max[1]
-            r = r *(rsup[1]-rsup[0])+rsup[0]
-            rew_pi = rew_pi *(rsup[1]-rsup[0])+rsup[0]
-            rew_ori = rew_ori*(rsup[1]-rsup[0])+rsup[0]
 
         weight = 1/(prob.reshape(len(batch_idx),-1))
         
@@ -181,16 +162,11 @@ class DeepDR():
             comb_neigh = [np.concatenate([np.append(neigh_s[i][j],neigh_a[i][j]).reshape(1,-1) for j in range(len(neigh_s[i]))],axis=0) for i in range(len(batch_idx))]
 
             rew_pi = self.value_func.get_value(comb_x, comb_neigh).reshape(len(batch_idx),-1)
-            # print(rew_pi[:20])
-            if self.normalize:
-                rsup = self.min_max[1]
-                rew_pi = rew_pi*(rsup[1]-rsup[0])+rsup[0]
-            # print(rew_pi[:20])
+
             plg_est += np.sum(rew_pi)/self.T/self.N
 
         dr_est = dr_est + plg_est
 
-        print('DR esimator value is {}'.format(dr_est))
         return dr_est
 
     def construct_is_est(self, batch_idx, prob):
@@ -202,7 +178,6 @@ class DeepDR():
 
         
         is_est = np.sum(weight*r)/self.T/self.N
-        print('IS esimator value is {}'.format(is_est))
         return is_est
         
     def construct_plg_est(self, a_tgt):
@@ -215,13 +190,10 @@ class DeepDR():
             comb_neigh = [np.concatenate([np.append(neigh_s[i][j],neigh_a[i][j]).reshape(1,-1) for j in range(len(neigh_s[i]))],axis=0) for i in range(len(batch_idx))]
 
             rew_pi = self.value_func.get_value(comb_x, comb_neigh).reshape(len(batch_idx),-1)
-            # print(rew_pi[:20])
             if self.normalize:
                 rsup = self.min_max[1]
                 rew_pi = rew_pi*(rsup[1]-rsup[0])+rsup[0]
-            # print(rew_pi[:20])
             plg_est += np.sum(rew_pi)/self.T/self.N
-        print('Plg estimator value is {}'.format(plg_est))
         return plg_est
         
     

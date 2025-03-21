@@ -183,25 +183,21 @@ class FQE_module():
         
         print('Start Training Reward Function Procedure...')
         self.model.train()
-        
-        for i in tqdm(range(max_iters)):
+        pbar = tqdm(range(max_iters), desc="Training Progress", mininterval=10)
+        for i in pbar:
             batch_idx = np.random.choice(self.NT, size=batch_size)
-            s,x,r,neigh_s,neigh_x = batch_generator(batch_idx, self.trajs, self.adj_mat)
-            # batch_generator not Checked yet .
-            x,r = (torch.from_numpy(x.astype('float32')).to(self.device),
-                   torch.from_numpy(r.astype('float32')).to(self.device))
+            s, x, r, neigh_s, neigh_x = batch_generator(batch_idx, self.trajs, self.adj_mat)
+            x, r = (torch.from_numpy(x.astype('float32')).to(self.device),
+                    torch.from_numpy(r.astype('float32')).to(self.device))
             neigh_x = [torch.from_numpy(x.astype('float32')).to(self.device) for x in neigh_x]
+            
             self.optimizer.zero_grad()
-            pred = self.model(x,neigh_x)
+            pred = self.model(x, neigh_x)
             
             loss = self.loss_fn(pred, r)
-            
             loss.backward()
             self.optimizer.step()
-            if i% print_freq==0:
-                with torch.no_grad():
-                    print("Train MSE :{}".format(loss.item()))
-            
+
     def get_value(self, x, neigh_x):
         x = torch.from_numpy(x.astype('float32')).to(self.device)
         neigh_x = [torch.from_numpy(x.astype('float32')).to(self.device) for x in neigh_x]
@@ -238,7 +234,7 @@ class Prop_module():
     def filter(self, rew_estimator):
         print('Now Filtering...')
         self.idents = []
-        for i in tqdm(range(len(self.trajs))):
+        for i in tqdm(range(len(self.trajs)), mininterval=10):
             batch_idx = np.arange(i*self.T,(i+1)*self.T)
             s, x, r, neigh_s, neigh_x = batch_generator(batch_idx, self.trajs, self.adj_mat)
 
@@ -258,17 +254,13 @@ class Prop_module():
             ident_term1 = (a==ta)
             
             ident = ident_term1*ident_term2
-#             if len(np.where(ident)[0]) != 0:
             self.idents.append(np.where(ident)[0])
                 
         print('Done!')
-#         print('Qualified idx is {}'.format(self.idents))
-        # return self.idents
     
     def  cal_prob(self, rew_estimator, mod, rep, noise, std):
         print('Start Calculating Propensity Score...')
         self.filter(rew_estimator)
-        print('idenst is  {}'.format(self.idents))
         if np.sum([len(x) for x in self.idents])>0:
             batch_idx = idx2batch(self.idents, self.N, self.T)
             s, x, r, neigh_s, neigh_x = batch_generator(batch_idx, self.trajs, self.adj_mat)
@@ -308,15 +300,20 @@ class Prop_module():
     def traversal_proc(self, neigh_s, target_m, rew_estimator, beh_pi):
         print('Now traversal procedure ...')
         probs = []
-        for i,x in tqdm(enumerate(neigh_s)):
+        # x have shape of 2(x-im) * 4(number of neighbors)
+        # wrapped_x have shape of 3(xa-im) * 2^4(all posible treatment assignment)
+        # postv_num: the number with actions
+        # pred_m: of shape 2(hidden dim) * 16(all posible assignment)
+        # target: of shape 2(hidden dim) * 16(same for all posible assignment)
+        for i,x in tqdm(enumerate(neigh_s), mininterval=2):
             wrapped_x, postv_num = wrap_traversal(x)
             # neg_num = len(x) - postv_num
             pred_m = rew_estimator.get_deepsets_result(wrapped_x)
             target = np.repeat(target_m[i].reshape(1,-1),len(wrapped_x),axis=0)
             ident = equal_m(pred_m, target, self.eql_thresh)
+            # import pdb; pdb.set_trace()
             num_pos = postv_num[np.where(ident)[0]]
-            # num_neg = neg_num[np.where(ident)[0]]
-            prob = np.sum([np.power(beh_pi,i)*np.power(1-beh_pi,len(x)-i) for i in num_pos])
+            prob = sum(ident)/len(ident)#np.sum([np.power(beh_pi,i)*np.power(1-beh_pi,len(x)-i) for i in num_pos])
             probs.append(prob)
         print('Done!')
         return np.array(probs)

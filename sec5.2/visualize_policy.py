@@ -12,12 +12,12 @@ from matplotlib.transforms import Bbox as Bbox
 import seaborn as sns
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--top', type=int, default=15) 
+parser.add_argument('--top', type=int, default=10) 
 parser.add_argument('--deepset', type=int, default=1)
 parser.add_argument("--obj", type = int, default = 0) # 0 for Order policy
 parser.add_argument("--name", type = str, default= "default")
 parser.add_argument("--mode", type = str, default = "DEBUG")
-parser.add_argument("--l", type = int, default = 15)
+parser.add_argument("--l", type = int, default = 10)
 
 args = parser.parse_args()
 
@@ -31,13 +31,13 @@ data, adj_mat, raww = DG_once(cfg, p = 0.5)
 # Get the initial driver combine it with actions see if stable.
 
 raws = []
-TOP = [0,30,40,50]
+TOP = [0,28,31,35]
 for top in TOP:
     tgt_pi = TopPolicy(None, top, distribution.u_O)
     states = np.zeros((1, l**2, T+cfg.DATA.burn_in))
     a_tgt = tgt_pi.get_action(states)[0]
     if top == 0:
-        data, adj_mat, raw = DG_once(cfg=cfg)
+        data, adj_mat, raw = DG_once(cfg=cfg, p = 0.5)
         raws.append(raw)
         continue
     data, adj_mat, raw = DG_once(cfg=cfg, a_tgt= a_tgt)

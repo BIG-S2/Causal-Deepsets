@@ -103,19 +103,11 @@ while len(PLG) <= REPLICATES:
     ########################################
 
     print('real_value is {:.1f},while standard error is {:.2f}'.format(state_value,state_std))
-    print('mean real_value is {:.1f}'.format(np.mean(STAT_VALUE)))  
-    print('mean DR is {}'.format(np.mean(DR)))
-    print('mean IS is {}'.format(np.mean(IS)))
-    print('mean PLG is {:.1f}'.format(np.mean(PLG)))
-    
     dump = [args.top, mse(DR, STAT_VALUE), mse(PLG, STAT_VALUE), ci(DR, STAT_VALUE), ci(PLG, STAT_VALUE), counter]
     print("MSE of DR is {}".format(dump[1]))
     print("MSE of PLG is {:.1f}".format(dump[2]))
-    print("CI of DR is {}".format(dump[3]))
-    print("CI of PLG is {}".format(dump[4]))
 
     ########################################
     with open(cfg.CLS.f_pth, 'wb') as f:
         pickle.dump(dump,f)
-    draw_results()
 

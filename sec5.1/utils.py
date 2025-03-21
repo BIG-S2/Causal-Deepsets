@@ -72,3 +72,10 @@ def getAdjGrid(l):
         if col != l - 1:
             adj_mat[i][i + 1] = 1
     return adj_mat
+
+
+def mse(esti,real):
+    return np.mean(np.square(np.array(esti)-np.array(real)))
+
+def ci(esti,real):
+    return np.std(np.square(np.array(esti)-np.array(real)))/np.sqrt(len(esti)) 
